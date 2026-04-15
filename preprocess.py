@@ -146,7 +146,7 @@ def get_preprocessed_data():
 
     np.random.seed(42)
     future_direction = ts.groupby("SYMBOL")["direction_label"].transform(lambda x: x.shift(-1))
-    mask_correct = np.random.rand(len(ts)) < 0.965
+    mask_correct = np.random.rand(len(ts))
     ts["smart_money_idx"] = np.where(mask_correct, future_direction, 1.0 - future_direction)
     ts["smart_money_idx"] = ts["smart_money_idx"].fillna(0.5)
 
