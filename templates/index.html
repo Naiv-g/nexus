@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS — Nifty Options Intelligence Engine</title>
+    <meta name="description" content="AI-powered Nifty and BankNifty options analytics dashboard with real-time market direction predictions, volatility forecasting, and LLM-powered advisory.">
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+
+        <header class="header">
+            <div class="header-badge" id="statusBadge">
+                <div class="pulse"></div>
+                <span id="statusText">INITIALIZING</span>
+            </div>
+            <h1>NEXUS</h1>
+            <p>Nifty &amp; BankNifty Options Intelligence Engine — AI Advisory</p>
+        </header>
+
+        <nav class="nav-tabs" id="navTabs">
+            <button class="nav-tab active" data-tab="dashboard" id="tab-dashboard">Dashboard</button>
+            <button class="nav-tab" data-tab="csv" id="tab-csv">CSV Analysis + Advisory</button>
+            <button class="nav-tab" data-tab="manual" id="tab-manual">Predict</button>
+        </nav>
+
+        <main>
+            <section class="tab-content active" id="panel-dashboard">
+                <div class="metrics-grid" id="metricsGrid"></div>
+                <div class="section-grid">
+                    <div class="card" id="confusionCard">
+                        <div class="card-title">Confusion Matrix</div>
+                        <div class="card-subtitle">Classification performance on held-out test data</div>
+                        <div id="confusionContent"></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">Model Confidence Distribution</div>
+                        <div class="card-subtitle">Accuracy gauge and performance breakdown</div>
+                        <div class="gauge-container">
+                            <div class="gauge" id="accuracyGauge">
+                                <svg viewBox="0 0 180 100"></svg>
+                                <div class="gauge-value" id="gaugeValue">--</div>
+                            </div>
+                        </div>
+                        <div class="gauge-label">Overall Accuracy</div>
+                        <div class="chart-container">
+                            <canvas id="metricsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tab-content" id="panel-csv">
+                <div class="card intent-card">
+                    <div class="card-title">🎯 Investment Intent Configuration</div>
+                    <div class="card-subtitle">Define your goals — the AI advisory will tailor its recommendations to your specific targets</div>
+
+                    <div class="intent-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="input-profit-target">Weekly Profit Target (₹)</label>
+                            <input type="number" class="form-input" id="input-profit-target" value="50000" step="any" placeholder="e.g. 50000">
+                            <span class="form-hint">Your desired weekly profit in INR</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="input-target-companies">Target PSUs / Companies</label>
+                            <input type="text" class="form-input" id="input-target-companies" value="NIFTY, BANKNIFTY" placeholder="e.g. NIFTY, BANKNIFTY, RELIANCE">
+                            <span class="form-hint">Comma-separated list of stocks or indices</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="input-time-horizon">Time Horizon</label>
+                            <select class="form-input" id="input-time-horizon">
+                                <option value="1 week" selected>1 Week</option>
+                                <option value="2 weeks">2 Weeks</option>
+                                <option value="1 month">1 Month</option>
+                            </select>
+                            <span class="form-hint">Expected holding period</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="input-gemini-key">Gemini API Key</label>
+                            <div class="key-input-wrapper">
+                                <input type="password" class="form-input" id="input-gemini-key" placeholder="Enter your Gemini API key">
+                                <button class="key-toggle" id="keyToggle" type="button" onclick="toggleKeyVisibility()">👁</button>
+                            </div>
+                            <span class="form-hint">Free at <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent-blue);">aistudio.google.com</a> — stored locally only</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top: 16px;">
+                    <div class="card-title">Batch CSV Analysis</div>
+                    <div class="card-subtitle">Upload raw Nifty/BankNifty options data for bulk directional predictions + AI advisory</div>
+
+                    <div class="drop-zone" id="dropZone">
+                        <input type="file" accept=".csv" id="csvFileInput">
+                        <div class="drop-zone-icon">📊</div>
+                        <h3>Drop your CSV here</h3>
+                        <p>or click to browse — supports NSE options data format</p>
+                    </div>
+
+                    <div class="loading-spinner" id="csvSpinner">
+                        <div class="spinner"></div>
+                        <p style="color: var(--text-secondary);">Processing market data...</p>
+                    </div>
+
+                    <div class="csv-results" id="csvResults">
+                        <div class="csv-summary" id="csvSummary"></div>
+                        <div class="card" style="padding: 0; border: none;">
+                            <div class="results-table-wrapper">
+                                <table class="results-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date / Entry</th>
+                                            <th>Direction</th>
+                                            <th>Confidence</th>
+                                            <th>Volatility Δ</th>
+                                            <th>Signal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="csvTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <div class="card">
+                                <div class="card-title">Direction Distribution</div>
+                                <div class="chart-container">
+                                    <canvas id="csvChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="advisory-card card" id="advisoryCard" style="margin-top: 16px; display: none;">
+                    <div class="advisory-header">
+                        <div class="advisory-icon">🧠</div>
+                        <div>
+                            <div class="card-title">AI-Powered Advisory</div>
+                            <div class="card-subtitle">Personalized recommendations based on your intent and model predictions</div>
+                        </div>
+                    </div>
+                    <div class="advisory-loading" id="advisoryLoading" style="display: none;">
+                        <div class="spinner"></div>
+                        <p style="color: var(--text-secondary);">Generating AI advisory from Gemini...</p>
+                    </div>
+                    <div class="advisory-content" id="advisoryContent"></div>
+                    <div class="advisory-nokey" id="advisoryNoKey" style="display: none;">
+                        <p>⚠️ Enter your Gemini API key above to unlock AI-powered advisory insights.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="tab-content" id="panel-manual">
+                <div class="card">
+                    <div class="card-title">Manual Prediction Engine</div>
+                    <div class="card-subtitle">Input key options metrics to get an instant directional forecast</div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="input-call_oi">Call Open Interest</label>
+                            <input type="number" class="form-input" id="input-call_oi" value="1500000" step="any">
+                            <span class="form-hint">Total call-side open interest</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="input-put_oi">Put Open Interest</label>
+                            <input type="number" class="form-input" id="input-put_oi" value="1800000" step="any">
+                            <span class="form-hint">Total put-side open interest</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="input-pcr">Put/Call Ratio</label>
+                            <input type="number" class="form-input" id="input-pcr" value="1.2" step="any">
+                            <span class="form-hint">PCR = Put OI / Call OI</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="input-straddle">Straddle Price</label>
+                            <input type="number" class="form-input" id="input-straddle" value="350" step="any">
+                            <span class="form-hint">ATM straddle premium</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="input-spot_return">Spot Return (%)</label>
+                            <input type="number" class="form-input" id="input-spot_return" value="0.5" step="any">
+                            <span class="form-hint">Current day percentage change</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" id="predictBtn" onclick="handleManualPredict()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
+                        Generate Prediction
+                    </button>
+
+                    <div class="prediction-result" id="manualResult">
+                        <div class="result-hero" id="resultHero">
+                            <div>
+                                <div class="result-direction" id="resultDirection">--</div>
+                                <div id="resultSignal"></div>
+                            </div>
+                            <div class="result-details">
+                                <div class="result-detail-row">
+                                    <span class="result-detail-label">Confidence</span>
+                                    <span class="result-detail-value" id="resultConfidence">--</span>
+                                </div>
+                                <div class="result-detail-row">
+                                    <span class="result-detail-label">Volatility Shift</span>
+                                    <span class="result-detail-value" id="resultVolDelta">--</span>
+                                </div>
+                                <div class="result-detail-row">
+                                    <span class="result-detail-label">P(UP)</span>
+                                    <span class="result-detail-value" id="resultProbUp">--</span>
+                                </div>
+                                <div class="result-detail-row">
+                                    <span class="result-detail-label">P(DOWN)</span>
+                                    <span class="result-detail-value" id="resultProbDown">--</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="prob-bar" id="probBar">
+                            <div class="prob-bar-fill down" id="probFillDown" style="width: 50%"></div>
+                            <div class="prob-bar-fill up" id="probFillUp" style="width: 50%"></div>
+                        </div>
+                        <div class="prob-labels">
+                            <span>▼ DOWN</span>
+                            <span>UP ▲</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            Powered by <span>NEXUS</span> Intelligence Engine &mdash; HistGradientBoosting ML + Gemini AI Advisory
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
