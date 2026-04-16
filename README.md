@@ -21,17 +21,10 @@ An AI-powered options analytics dashboard that predicts market direction (UP/DOW
 
 - **Backend**: Flask server with pickle-serialized HistGradientBoosting models (classifier + regressor)
 - **Preprocessing**: 46 engineered financial features from raw NSE data (PCR, OI buildup, straddle pricing, smart money index)
-- **Frontend**: Vanilla HTML/CSS/JS with Chart.js, glassmorphism dark theme
+- **Frontend**: streamlit
 - **LLM**: Client-side Gemini API calls (no server-side API keys needed)
 
-## Quick Start
 
-```bash
-pip install flask numpy pandas scikit-learn
-cd nexus
-python server.py
-```
-Open `http://localhost:5000` in your browser.
 
 ## Model Performance
 
@@ -42,6 +35,3 @@ Open `http://localhost:5000` in your browser.
 | ROC-AUC | 0.9520 |
 | Vol MAE | 0.5418 |
 
-## API Key
-
-Get a free Gemini API key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey). Enter it in the dashboard — it's stored in your browser's localStorage only, never sent to our server.
