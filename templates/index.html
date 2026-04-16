@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS — Nifty Options Intelligence Engine</title>
-    <meta name="description" content="AI-powered Nifty and BankNifty options analytics dashboard with real-time market direction predictions, volatility forecasting, and LLM-powered advisory.">
+    <title>NEXUS — Nifty Options Intelligence Engine + AI Advisory</title>
+    <meta name="description" content="AI-powered Nifty and BankNifty options analytics dashboard with direction predictions, volatility forecasting, portfolio simulation, and LLM-powered advisory.">
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -17,16 +17,19 @@
                 <span id="statusText">INITIALIZING</span>
             </div>
             <h1>NEXUS</h1>
-            <p>Nifty &amp; BankNifty Options Intelligence Engine — AI Advisory</p>
+            <p>Nifty &amp; BankNifty Options Intelligence — AI Advisory Platform</p>
         </header>
 
         <nav class="nav-tabs" id="navTabs">
             <button class="nav-tab active" data-tab="dashboard" id="tab-dashboard">Dashboard</button>
-            <button class="nav-tab" data-tab="csv" id="tab-csv">CSV Analysis + Advisory</button>
+            <button class="nav-tab" data-tab="csv" id="tab-csv">Smart Analysis</button>
+            <button class="nav-tab" data-tab="simulator" id="tab-simulator">Portfolio Sim</button>
             <button class="nav-tab" data-tab="manual" id="tab-manual">Predict</button>
         </nav>
 
         <main>
+
+            <!-- DASHBOARD -->
             <section class="tab-content active" id="panel-dashboard">
                 <div class="metrics-grid" id="metricsGrid"></div>
                 <div class="section-grid">
@@ -52,15 +55,15 @@
                 </div>
             </section>
 
+            <!-- SMART ANALYSIS -->
             <section class="tab-content" id="panel-csv">
                 <div class="card intent-card">
                     <div class="card-title">🎯 Investment Intent Configuration</div>
-                    <div class="card-subtitle">Define your goals — the AI advisory will tailor its recommendations to your specific targets</div>
-
+                    <div class="card-subtitle">Define your goals — the AI advisory will tailor recommendations to your targets</div>
                     <div class="intent-grid">
                         <div class="form-group">
                             <label class="form-label" for="input-profit-target">Weekly Profit Target (₹)</label>
-                            <input type="number" class="form-input" id="input-profit-target" value="50000" step="any" placeholder="e.g. 50000">
+                            <input type="number" class="form-input" id="input-profit-target" value="50000" step="any">
                             <span class="form-hint">Your desired weekly profit in INR</span>
                         </div>
                         <div class="form-group">
@@ -78,34 +81,50 @@
                             <span class="form-hint">Expected holding period</span>
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="input-gemini-key">Gemini API Key</label>
+                            <label class="form-label" for="input-gemini-key">Gemini API Key <span class="demo-badge">OPTIONAL — Demo mode available</span></label>
                             <div class="key-input-wrapper">
-                                <input type="password" class="form-input" id="input-gemini-key" placeholder="Enter your Gemini API key">
+                                <input type="password" class="form-input" id="input-gemini-key" placeholder="Leave empty for built-in demo advisory">
                                 <button class="key-toggle" id="keyToggle" type="button" onclick="toggleKeyVisibility()">👁</button>
                             </div>
-                            <span class="form-hint">Free at <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent-blue);">aistudio.google.com</a> — stored locally only</span>
+                            <span class="form-hint">Free at <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--accent-blue);">aistudio.google.com</a> — or leave blank for demo mode</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="card" style="margin-top: 16px;">
-                    <div class="card-title">Batch CSV Analysis</div>
-                    <div class="card-subtitle">Upload raw Nifty/BankNifty options data for bulk directional predictions + AI advisory</div>
-
+                    <div class="card-title">📊 Batch CSV Analysis</div>
+                    <div class="card-subtitle">Upload raw options data for bulk directional predictions + AI advisory</div>
                     <div class="drop-zone" id="dropZone">
                         <input type="file" accept=".csv" id="csvFileInput">
                         <div class="drop-zone-icon">📊</div>
                         <h3>Drop your CSV here</h3>
                         <p>or click to browse — supports NSE options data format</p>
                     </div>
-
                     <div class="loading-spinner" id="csvSpinner">
                         <div class="spinner"></div>
                         <p style="color: var(--text-secondary);">Processing market data...</p>
                     </div>
-
                     <div class="csv-results" id="csvResults">
                         <div class="csv-summary" id="csvSummary"></div>
+
+                        <!-- Momentum Indicators -->
+                        <div class="card" style="padding: 20px; margin-bottom: 16px; border: none;">
+                            <div class="card-title" style="font-size: 16px;">📈 Trend Momentum</div>
+                            <div class="momentum-container" id="momentumBars"></div>
+                        </div>
+
+                        <!-- Risk Heatmap -->
+                        <div class="card" style="padding: 20px; margin-bottom: 16px; border: none;">
+                            <div class="card-title" style="font-size: 16px;">🔥 Risk Heatmap</div>
+                            <div class="card-subtitle">Each cell = one prediction. Color intensity = confidence × volatility risk</div>
+                            <div class="heatmap-container" id="riskHeatmap"></div>
+                            <div class="heatmap-legend">
+                                <span>Low Risk</span>
+                                <div class="heatmap-legend-bar"></div>
+                                <span>High Risk</span>
+                            </div>
+                        </div>
+
                         <div class="card" style="padding: 0; border: none;">
                             <div class="results-table-wrapper">
                                 <table class="results-table">
@@ -122,7 +141,7 @@
                                 </table>
                             </div>
                         </div>
-                        <div style="margin-top: 20px;">
+                        <div style="margin-top: 16px;">
                             <div class="card">
                                 <div class="card-title">Direction Distribution</div>
                                 <div class="chart-container">
@@ -130,33 +149,82 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="export-bar">
+                            <button class="btn-secondary" onclick="exportReport()">📥 Export Report</button>
+                            <button class="btn-secondary" onclick="exportCSVResults()">📋 Export CSV</button>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Advisory Panel -->
                 <div class="advisory-card card" id="advisoryCard" style="margin-top: 16px; display: none;">
                     <div class="advisory-header">
                         <div class="advisory-icon">🧠</div>
                         <div>
-                            <div class="card-title">AI-Powered Advisory</div>
+                            <div class="card-title">AI-Powered Advisory <span class="demo-badge" id="advisoryModeBadge" style="display:none;">DEMO MODE</span></div>
                             <div class="card-subtitle">Personalized recommendations based on your intent and model predictions</div>
                         </div>
                     </div>
                     <div class="advisory-loading" id="advisoryLoading" style="display: none;">
                         <div class="spinner"></div>
-                        <p style="color: var(--text-secondary);">Generating AI advisory from Gemini...</p>
+                        <p style="color: var(--text-secondary);">Generating AI advisory...</p>
                     </div>
                     <div class="advisory-content" id="advisoryContent"></div>
-                    <div class="advisory-nokey" id="advisoryNoKey" style="display: none;">
-                        <p>⚠️ Enter your Gemini API key above to unlock AI-powered advisory insights.</p>
+                </div>
+            </section>
+
+            <!-- PORTFOLIO SIMULATOR -->
+            <section class="tab-content" id="panel-simulator">
+                <div class="card simulator-card">
+                    <div class="card-title">💼 Portfolio Simulator</div>
+                    <div class="card-subtitle">Calculate position sizing and projected returns based on your targets and model confidence</div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label" for="sim-capital">Available Capital (₹)</label>
+                            <input type="number" class="form-input" id="sim-capital" value="500000" step="any">
+                            <span class="form-hint">Total trading capital</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="sim-risk-pct">Risk Per Trade (%)</label>
+                            <input type="number" class="form-input" id="sim-risk-pct" value="2" step="0.1" min="0.5" max="10">
+                            <span class="form-hint">Max % of capital at risk per trade</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="sim-lot-size">Lot Size</label>
+                            <input type="number" class="form-input" id="sim-lot-size" value="50" step="1">
+                            <span class="form-hint">Nifty=50, BankNifty=30</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="sim-target-profit">Target Profit (₹)</label>
+                            <input type="number" class="form-input" id="sim-target-profit" value="50000" step="any">
+                            <span class="form-hint">Weekly profit goal</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" onclick="runSimulator()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4"/></svg>
+                        Run Simulation
+                    </button>
+
+                    <div id="simResults" style="display:none;">
+                        <div class="sim-results-grid" id="simResultsGrid"></div>
+                        <div class="card" style="margin-top: 16px;">
+                            <div class="card-title" style="font-size: 16px;">Scenario Analysis</div>
+                            <div class="chart-container">
+                                <canvas id="simChart"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
+            <!-- MANUAL PREDICT -->
             <section class="tab-content" id="panel-manual">
                 <div class="card">
                     <div class="card-title">Manual Prediction Engine</div>
                     <div class="card-subtitle">Input key options metrics to get an instant directional forecast</div>
-
                     <div class="form-grid">
                         <div class="form-group">
                             <label class="form-label" for="input-call_oi">Call Open Interest</label>
@@ -184,12 +252,10 @@
                             <span class="form-hint">Current day percentage change</span>
                         </div>
                     </div>
-
                     <button class="btn-primary" id="predictBtn" onclick="handleManualPredict()">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/></svg>
                         Generate Prediction
                     </button>
-
                     <div class="prediction-result" id="manualResult">
                         <div class="result-hero" id="resultHero">
                             <div>
